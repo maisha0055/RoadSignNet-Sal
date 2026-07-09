@@ -1,0 +1,241 @@
+# RoadSignNet-SAL V6: Ultimate Training Configuration
+# All improvements combined for maximum performance
+
+experiment:
+  name: roadsignnet_sal_v6_ultimate
+  description: Ultimate training with Mosaic, Knowledge Distillation, and optimized hyperparameters
+  seed: 42
+  deterministic: true
+
+# Model Configuration - Increased capacity
+model:
+  num_classes: 43
+  width_multiplier: 1.5  # Increased from 1.0 for more capacity
+  pretrained: false
+  pretrained_path: null
+  backbone: "densenet121+efficientnet_b0+vit_tiny_patch16_224"
+  freeze_backbone: false
+  use_kan_cls: true
+  kan_grid: 8
+  class_names:
+    - bicycle
+    - bus_stop
+    - children
+    - crosswalk
+    - do_not_stop
+    - do_not_turn_left
+    - do_not_turn_right
+    - do_not_u_turn
+    - enter_left_lane
+    - give_way
+    - green_light
+    - left_lane_enter
+    - left_turn
+    - narrow_road
+    - no_entry
+    - no_overtaking
+    - no_parking
+    - no_stop
+    - no_waiting
+    - parking
+    - railway_crossing
+    - red_light
+    - refueling
+    - right_turn
+    - road_main
+    - road_work
+    - school_nearby
+    - speed_bump
+    - speed_limit_100
+    - speed_limit_120
+    - speed_limit_20
+    - speed_limit_30
+    - speed_limit_40
+    - speed_limit_50
+    - speed_limit_60
+    - speed_limit_70
+    - speed_limit_80
+    - stop
+    - t_intersection_l
+    - t_intersection_r
+    - traffic_sign
+    - truck
+    - yellow_light
+
+# Training Configuration - Extended training
+training:
+  epochs: 30  # Continue teacher finetuning from the best checkpoint
+  batch_size: 8
+  img_size: 224
+  num_workers: 0
+  accumulation_steps: 2
+  
+  # Optimizer - AdamW with cosine annealing
+  optimizer:
+    name: adamw
+    lr: 0.001
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+  
+  # Learning rate schedule - Cosine annealing with warmup
+  scheduler:
+    name: cosine_annealing_warmup
+    warmup_epochs: 5
+    min_lr: 0.000001
+    T_max: 145  # epochs - warmup_epochs
+    eta_min: 0.000001
+  
+  # Mixed precision for faster training
+  amp: true
+  
+  # Gradient clipping for stability
+  grad_clip: 10.0
+
+  # Loss weights for anchor-based head
+  loss:
+    lambda_cls: 1.0
+    lambda_box: 2.0
+    lambda_obj: 1.0
+  
+  # Early stopping (disabled for full training)
+  early_stopping:
+    enabled: false
+    patience: 30
+    min_delta: 0.001
+
+# Advanced Augmentation - YOLO-style
+augmentation:
+  # Mosaic augmentation (combines 4 images)
+  mosaic:
+    enabled: true
+    prob: 0.5
+  
+  # MixUp augmentation (blends 2 images)
+  mixup:
+    enabled: true
+    prob: 0.15
+    alpha: 0.5
+  
+  # Copy-Paste augmentation
+  copy_paste:
+    enabled: true
+    prob: 0.2
+  
+  # HSV color augmentation
+  hsv:
+    enabled: true
+    prob: 0.5
+    h_gain: 0.015
+    s_gain: 0.7
+    v_gain: 0.4
+  
+  # Geometric augmentations
+  horizontal_flip: 0.5
+  vertical_flip: 0.0
+  
+  # Scale and translate
+  scale: 0.5
+  translate: 0.1
+  
+  # Perspective
+  perspective: 0.0
+  
+  # Affine
+  degrees: 0.0
+  shear: 0.0
+
+# Knowledge Distillation
+distillation:
+  enabled: true
+  teacher_model: "yolo11s.pt"  # Best performing YOLO model
+  temperature: 2.0
+  teacher_backbone: "densenet121+efficientnet_b0+vit_tiny_patch16_224"
+  teacher_checkpoint: "outputs/v6_fast/checkpoints/best_model.pth"
+  epochs: 20
+  warmup_epochs: 3
+  ramp_epochs: 5
+  teacher_conf_thresh: 0.35
+  student_type: "transfer"  # sal | transfer
+  student_backbone: "efficientnet_b0"
+  student_use_kan_cls: true
+  student_kan_grid: 8
+  lambda_cls: 0.8
+  lambda_box: 0.15
+  lambda_obj: 0.35
+  
+  # Loss weights
+  lambda_feat: 0.2      # Feature distillation
+  lambda_logit: 0.8     # Logit distillation  
+  lambda_att: 0.2       # Attention transfer
+  lambda_bbox: 0.15     # BBox distillation
+
+# EMA (Exponential Moving Average)
+ema:
+  enabled: true
+  decay: 0.9999
+
+# Loss function weights
+loss:
+  lambda_heat: 1.0      # Heatmap/objectness loss
+  lambda_box: 2.0       # Box regression loss (increased)
+  lambda_cls: 1.0       # Classification loss
+  
+  # Focal loss parameters
+  focal_alpha: 0.25
+  focal_gamma: 2.0
+
+# Validation
+validation:
+  interval: 1  # Validate every epoch
+  conf_thresh: 0.1
+  nms_thresh: 0.45
+  max_detections: 100
+
+# Multi-scale training (optional)
+multi_scale:
+  enabled: false
+  sizes: [480, 544, 608, 640, 704, 768]
+  interval: 10  # Change scale every 10 batches
+
+# Data
+data:
+  train_img_dir: "RoadSignNet-SAL-main/data/train/images"
+  train_label_dir: "RoadSignNet-SAL-main/data/train/labels"
+  val_img_dir: "RoadSignNet-SAL-main/data/valid/images"
+  val_label_dir: "RoadSignNet-SAL-main/data/valid/labels"
+  test_img_dir: "RoadSignNet-SAL-main/data/test/images"
+  test_label_dir: "RoadSignNet-SAL-main/data/test/labels"
+  img_size: 224
+  num_workers: 0
+  pin_memory: false
+
+# Logging
+logging:
+  log_dir: "outputs/v6_fast/logs"
+  save_interval: 10
+  tensorboard: true
+  use_tensorboard: true
+  wandb: false
+
+# Checkpointing
+checkpoint:
+  save_dir: "outputs/v6_fast/checkpoints"
+  save_best: true
+  save_last: true
+  save_interval: 10
+
+# Export
+export:
+  save_dir: "outputs/v6_fast/exports"
+  formats: [onnx, torchscript]
+  quantize: false
+  onnx: true
+  torchscript: true
+  tflite: false
+
+# Hardware
+hardware:
+  device: "cuda"
+  gpu_ids: [0]
+  mixed_precision: true
+  cudnn_benchmark: true

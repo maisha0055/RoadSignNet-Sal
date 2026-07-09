@@ -1,0 +1,85 @@
+# YOLOv8n backbone retrain with hard negatives
+experiment:
+  name: roadsignnet_sal_v6_retrain_yolov8n
+  description: Retrain with YOLOv8n backbone
+  seed: 42
+  deterministic: true
+
+model:
+  num_classes: 43
+  width_multiplier: 1.0
+  pretrained: true
+  pretrained_path: null
+  backbone: "yolov8n"
+  freeze_backbone: false
+  use_kan_cls: true
+  kan_grid: 8
+
+training:
+  epochs: 35
+  batch_size: 8
+  img_size: 224
+  num_workers: 4
+  accumulation_steps: 2
+
+  optimizer:
+    name: adamw
+    lr: 1.5e-04
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+
+  scheduler:
+    name: cosine_annealing_warmup
+    warmup_epochs: 3
+    min_lr: 1e-06
+    T_max: 35
+    eta_min: 1e-06
+
+  amp: true
+  grad_clip: 10.0
+
+  loss:
+    lambda_cls: 1.0
+    lambda_box: 1.6
+    lambda_obj: 2.3
+
+  early_stopping:
+    enabled: false
+
+data:
+  train_img_dir: "downloads/merged_all_mapped43/train/images;outputs/hard_negatives/crops"
+  train_label_dir: "downloads/merged_all_mapped43/train/labels;outputs/hard_negatives/labels"
+  val_img_dir: "downloads/merged_all_mapped43/valid/images"
+  val_label_dir: "downloads/merged_all_mapped43/valid/labels"
+  test_img_dir: "downloads/merged_all_mapped43/test/images"
+  test_label_dir: "downloads/merged_all_mapped43/test/labels"
+  img_size: 224
+  num_workers: 4
+  pin_memory: false
+
+logging:
+  log_dir: "outputs/v6_retrain_yolov8n/logs"
+  save_interval: 5
+  tensorboard: true
+  use_tensorboard: true
+  wandb: false
+
+checkpoint:
+  save_dir: "outputs/v6_retrain_yolov8n/checkpoints"
+  save_best: true
+  save_last: true
+  save_interval: 5
+
+export:
+  save_dir: "outputs/v6_retrain_yolov8n/exports"
+  formats: [onnx, torchscript]
+  quantize: false
+  onnx: true
+  torchscript: true
+  tflite: false
+
+hardware:
+  device: cuda
+  gpu_ids: [0]
+  mixed_precision: true
+  cudnn_benchmark: true

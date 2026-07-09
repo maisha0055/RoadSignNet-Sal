@@ -1,0 +1,87 @@
+# Short hard-negative finetune (quick iteration)
+experiment:
+  name: roadsignnet_sal_v6_realtime_teacher_hardneg_finetune_short
+  description: Short finetune with hard negatives (quick iteration)
+  seed: 42
+  deterministic: true
+
+model:
+  num_classes: 43
+  width_multiplier: 1.0
+  pretrained: false
+  pretrained_path: null
+  backbone: "efficientnet_b0+vit_tiny_patch16_224"
+  freeze_backbone: false
+  use_kan_cls: true
+  kan_grid: 8
+
+training:
+  epochs: 12
+  batch_size: 8
+  img_size: 224
+  num_workers: 4
+  accumulation_steps: 2
+
+  optimizer:
+    name: adamw
+    lr: 6e-05
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+
+  scheduler:
+    name: cosine_annealing_warmup
+    warmup_epochs: 1
+    min_lr: 1e-06
+    T_max: 12
+    eta_min: 1e-06
+
+  amp: true
+  grad_clip: 10.0
+
+  loss:
+    lambda_cls: 1.0
+    lambda_box: 1.6
+    lambda_obj: 2.3
+
+  early_stopping:
+    enabled: false
+    patience: 6
+    min_delta: 0.001
+
+data:
+  train_img_dir: "downloads/merged_all_mapped43/train/images;outputs/hard_negatives/crops"
+  train_label_dir: "downloads/merged_all_mapped43/train/labels;outputs/hard_negatives/labels"
+  val_img_dir: "downloads/merged_all_mapped43/valid/images"
+  val_label_dir: "downloads/merged_all_mapped43/valid/labels"
+  test_img_dir: "downloads/merged_all_mapped43/test/images"
+  test_label_dir: "downloads/merged_all_mapped43/test/labels"
+  img_size: 224
+  num_workers: 4
+  pin_memory: false
+
+logging:
+  log_dir: "outputs/v6_realtime_teacher_hardneg_short/logs"
+  save_interval: 5
+  tensorboard: true
+  use_tensorboard: true
+  wandb: false
+
+checkpoint:
+  save_dir: "outputs/v6_realtime_teacher_hardneg_short/checkpoints"
+  save_best: true
+  save_last: true
+  save_interval: 5
+
+export:
+  save_dir: "outputs/v6_realtime_teacher_hardneg_short/exports"
+  formats: [onnx, torchscript]
+  quantize: false
+  onnx: true
+  torchscript: true
+  tflite: false
+
+hardware:
+  device: cuda
+  gpu_ids: [0]
+  mixed_precision: true
+  cudnn_benchmark: true

@@ -1,0 +1,138 @@
+# Realtime-oriented v6 hybrid teacher configuration
+
+experiment:
+  name: roadsignnet_sal_v6_realtime_teacher_effnet
+  description: Smaller hybrid teacher using EfficientNet for better realtime accuracy tradeoff
+  seed: 42
+  deterministic: true
+
+model:
+  num_classes: 43
+  width_multiplier: 1.0
+  pretrained: true
+  pretrained_path: null
+  backbone: "efficientnet_b0+vit_tiny_patch16_224"
+  freeze_backbone: false
+  use_kan_cls: true
+  kan_grid: 8
+  class_names:
+    - bicycle
+    - bus_stop
+    - children
+    - crosswalk
+    - do_not_stop
+    - do_not_turn_left
+    - do_not_turn_right
+    - do_not_u_turn
+    - enter_left_lane
+    - give_way
+    - green_light
+    - left_lane_enter
+    - left_turn
+    - narrow_road
+    - no_entry
+    - no_overtaking
+    - no_parking
+    - no_stop
+    - no_waiting
+    - parking
+    - railway_crossing
+    - red_light
+    - refueling
+    - right_turn
+    - road_main
+    - road_work
+    - school_nearby
+    - speed_bump
+    - speed_limit_100
+    - speed_limit_120
+    - speed_limit_20
+    - speed_limit_30
+    - speed_limit_40
+    - speed_limit_50
+    - speed_limit_60
+    - speed_limit_70
+    - speed_limit_80
+    - stop
+    - t_intersection_l
+    - t_intersection_r
+    - traffic_sign
+    - truck
+    - yellow_light
+
+training:
+  epochs: 260
+  batch_size: 1
+  img_size: 640
+  num_workers: 4
+  accumulation_steps: 2
+  # Expose EMA and class-balanced options (training will use if implemented)
+  ema: true
+  ema_decay: 0.999
+
+  optimizer:
+    name: adamw
+    lr: 0.0002
+    weight_decay: 0.01
+    betas: [0.9, 0.999]
+
+  scheduler:
+    name: cosine_annealing_warmup
+    warmup_epochs: 3
+    min_lr: 0.000001
+    T_max: 37
+    eta_min: 0.000001
+
+  amp: true
+  grad_clip: 10.0
+
+  loss:
+    lambda_cls: 1.0
+    lambda_box: 1.8
+    lambda_obj: 1.5
+
+  early_stopping:
+    enabled: false
+    patience: 15
+    min_delta: 0.001
+
+data:
+  # Include mined hard negatives (if present) along with main train set
+  train_img_dir: "downloads/merged_all_mapped43/train/images;outputs/hard_negatives/crops;downloads/augmented_rare/images"
+  train_label_dir: "downloads/merged_all_mapped43/train/labels;outputs/hard_negatives/labels;downloads/augmented_rare/labels"
+  val_img_dir: downloads/merged_all_mapped43/valid/images
+  val_label_dir: downloads/merged_all_mapped43/valid/labels
+  test_img_dir: downloads/merged_all_mapped43/test/images
+  test_label_dir: downloads/merged_all_mapped43/test/labels
+  img_size: 640
+  num_workers: 4
+  pin_memory: false
+  # Optionally use class-balanced sampling (dataset code must support this)
+  class_balanced: true
+
+logging:
+  log_dir: outputs/v6_realtime_teacher/logs
+  save_interval: 5
+  tensorboard: true
+  use_tensorboard: true
+  wandb: false
+
+checkpoint:
+  save_dir: outputs/v6_realtime_teacher/checkpoints
+  save_best: true
+  save_last: true
+  save_interval: 5
+
+export:
+  save_dir: outputs/v6_realtime_teacher/exports
+  formats: [onnx, torchscript]
+  quantize: false
+  onnx: true
+  torchscript: true
+  tflite: false
+
+hardware:
+  device: cuda
+  gpu_ids: [0]
+  mixed_precision: true
+  cudnn_benchmark: true

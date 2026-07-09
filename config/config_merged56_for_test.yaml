@@ -1,0 +1,9 @@
+data:
+  train_img_dir: ./downloads/merged_all/test/images
+  train_label_dir: ./downloads/merged_all/test/labels
+  val_img_dir: ./downloads/merged_all/valid/images
+  val_label_dir: ./downloads/merged_all/valid/labels
+  test_img_dir: ./downloads/merged_all/test/images
+  test_label_dir: ./downloads/merged_all/test/labels
+model:
+  num_classes: 56

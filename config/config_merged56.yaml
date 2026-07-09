@@ -1,0 +1,186 @@
+experiment:
+  name: roadsignnet_sal_merged56
+  description: Accuracy-focused training on merged Roboflow datasets (56 classes)
+  seed: 42
+  deterministic: true
+
+model:
+  num_classes: 56
+  width_multiplier: 1.35
+  pretrained: false
+  pretrained_path: null
+  class_names:
+    - class_0
+    - class_1
+    - class_2
+    - class_3
+    - class_4
+    - class_5
+    - class_6
+    - class_7
+    - class_8
+    - class_9
+    - class_10
+    - class_11
+    - class_12
+    - class_13
+    - class_14
+    - class_15
+    - class_16
+    - class_17
+    - class_18
+    - class_19
+    - class_20
+    - class_21
+    - class_22
+    - class_23
+    - class_24
+    - class_25
+    - class_26
+    - class_27
+    - class_28
+    - class_29
+    - class_30
+    - class_31
+    - class_32
+    - class_33
+    - class_34
+    - class_35
+    - class_36
+    - class_37
+    - class_38
+    - class_39
+    - class_40
+    - class_41
+    - class_42
+    - class_43
+    - class_44
+    - class_45
+    - class_46
+    - class_47
+    - class_48
+    - class_49
+    - class_50
+    - class_51
+    - class_52
+    - class_53
+    - class_54
+    - class_55
+
+data:
+  train_img_dir: ./downloads/merged_all/train/images
+  train_label_dir: ./downloads/merged_all/train/labels
+  val_img_dir: ./downloads/merged_all/valid/images
+  val_label_dir: ./downloads/merged_all/valid/labels
+  test_img_dir: ./downloads/merged_all/test/images
+  test_label_dir: ./downloads/merged_all/test/labels
+  img_size: 320
+  num_classes: 56
+  class_names:
+    - class_0
+    - class_1
+    - class_2
+    - class_3
+    - class_4
+    - class_5
+    - class_6
+    - class_7
+    - class_8
+    - class_9
+    - class_10
+    - class_11
+    - class_12
+    - class_13
+    - class_14
+    - class_15
+    - class_16
+    - class_17
+    - class_18
+    - class_19
+    - class_20
+    - class_21
+    - class_22
+    - class_23
+    - class_24
+    - class_25
+    - class_26
+    - class_27
+    - class_28
+    - class_29
+    - class_30
+    - class_31
+    - class_32
+    - class_33
+    - class_34
+    - class_35
+    - class_36
+    - class_37
+    - class_38
+    - class_39
+    - class_40
+    - class_41
+    - class_42
+    - class_43
+    - class_44
+    - class_45
+    - class_46
+    - class_47
+    - class_48
+    - class_49
+    - class_50
+    - class_51
+    - class_52
+    - class_53
+    - class_54
+    - class_55
+
+training:
+  epochs: 80
+  batch_size: 8
+  num_workers: 0
+  pin_memory: false
+  optimizer:
+    name: AdamW
+    lr: 0.0005
+    weight_decay: 0.0003
+    betas: [0.9, 0.999]
+  scheduler:
+    name: CosineAnnealingLR
+    T_max: 80
+    eta_min: 0.000001
+  loss:
+    lambda_heat: 1.0
+    lambda_cls: 1.0
+    lambda_box: 1.5
+    lambda_obj: 2.0
+  augmentation:
+    enable: true
+    horizontal_flip: 0.5
+    brightness_contrast: 0.4
+    hue_saturation: 0.3
+    gauss_noise: 0.2
+    rotation: 10
+    scale: [0.8, 1.2]
+
+validation:
+  interval: 1
+  save_best: true
+  metric: val_loss
+
+checkpoint:
+  save_dir: ./outputs/checkpoints
+  save_interval: 10
+  keep_last_n: 5
+  resume_from: null
+
+logging:
+  log_dir: ./outputs/logs
+  use_tensorboard: true
+  use_wandb: false
+  print_interval: 20
+
+hardware:
+  device: cuda
+  gpu_ids: [0]
+  mixed_precision: true
+  cudnn_benchmark: true

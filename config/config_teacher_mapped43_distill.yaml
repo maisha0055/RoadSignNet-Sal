@@ -1,0 +1,90 @@
+experiment:
+  name: roadsignnet_sal_teacher_mapped43_distill
+  description: Hybrid distillation on mapped 43-class dataset with retrained teacher
+  seed: 42
+  deterministic: true
+
+model:
+  num_classes: 43
+  width_multiplier: 1.35
+  pretrained: false
+  pretrained_path: null
+
+data:
+  train_img_dir: ./downloads/merged_all_mapped43/train/images
+  train_label_dir: ./downloads/merged_all_mapped43/train/labels
+  val_img_dir: ./downloads/merged_all_mapped43/valid/images
+  val_label_dir: ./downloads/merged_all_mapped43/valid/labels
+  test_img_dir: ./downloads/merged_all_mapped43/test/images
+  test_label_dir: ./downloads/merged_all_mapped43/test/labels
+  img_size: 320
+
+training:
+  epochs: 30
+  batch_size: 8
+  num_workers: 0
+  pin_memory: false
+  optimizer:
+    name: AdamW
+    lr: 0.0005
+    weight_decay: 0.0003
+    betas: [0.9, 0.999]
+  scheduler:
+    name: CosineAnnealingLR
+    T_max: 30
+    eta_min: 0.000001
+  loss:
+    lambda_heat: 1.0
+    lambda_cls: 1.0
+    lambda_box: 1.5
+    lambda_obj: 2.0
+  augmentation:
+    enable: true
+    horizontal_flip: 0.5
+    brightness_contrast: 0.4
+    hue_saturation: 0.3
+    gauss_noise: 0.2
+    rotation: 10
+    scale: [0.8, 1.2]
+
+distillation:
+  teacher_backbone: densenet121+efficientnet_b0+vit_tiny_patch16_224
+  teacher_checkpoint: ./outputs/v6_fast/checkpoints/best_model.pth
+  teacher_use_kan_cls: true
+
+  student_type: transfer
+  student_backbone: efficientnet_b0
+  student_use_kan_cls: true
+
+  temperature: 2.0
+  lambda_cls: 1.0
+  lambda_box: 0.5
+  lambda_obj: 0.5
+  lambda_total: 1.0
+  epochs: 30
+  warmup_epochs: 3
+  ramp_epochs: 5
+  teacher_conf_thresh: 0.25
+
+validation:
+  interval: 1
+  save_best: true
+  metric: val_loss
+
+checkpoint:
+  save_dir: ./outputs/checkpoints_distill_teacher_mapped43
+  save_interval: 10
+  keep_last_n: 5
+  resume_from: null
+
+logging:
+  log_dir: ./outputs/logs_distill_teacher_mapped43
+  use_tensorboard: true
+  use_wandb: false
+  print_interval: 20
+
+hardware:
+  device: cuda
+  gpu_ids: [0]
+  mixed_precision: true
+  cudnn_benchmark: true
